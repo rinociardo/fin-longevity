@@ -1,0 +1,29 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Financial Longevity Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div style="text-align:center; margin-bottom:1rem;">
+    <label for="darkToggle">
+        <input type="checkbox" id="darkToggle" />
+        Dark Mode
+    </label>
+  </div>
+  <h1>Financial Longevity Calculator</h1>
+  <form id="input-form">
+    <label>Current Age: <input type="number" id="age" value="72.25" /></label>
+    <label>Target Life Expectancy: <input type="number" id="life" value="88" /></label>
+    <label>Starting Assets ($): <input type="number" id="assets" value="1000000" /></label>
+    <label>Annual Spending ($): <input type="number" id="spending" value="45000" /></label>
+    <button type="submit">Calculate</button>
+  </form>
+  <canvas id="chart" width="800" height="400"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
