@@ -15,14 +15,21 @@
     </label>
   </div>
   <h1>Financial Longevity Calculator</h1>
+  <div id="warning-box" style="color: red; display: none;"></div>
   <form id="input-form">
-    <label>Current Age: <input type="number" id="age" value="72.25" /></label>
+    <label>Date of Birth:
+        <input type="date" id="dob" value="1953-05-14" />
+    </label>
     <label>Target Life Expectancy: <input type="number" id="life" value="88" /></label>
-    <label>Starting Assets ($): <input type="number" id="assets" value="1000000" /></label>
+    <label>Starting Assets ($): <input type="number" id="savings" value="1000000" /></label>
     <label>Annual Spending ($): <input type="number" id="spending" value="45000" /></label>
-    <button type="submit">Calculate</button>
+    <!-- <button type="submit">Calculate</button> -->
+
   </form>
-  <canvas id="chart" width="800" height="400"></canvas>
+  <div id="result" style="margin-top: 1rem; font-weight: 500;"></div>
+
+  <canvas id="depletionChart" width="600" height="300"></canvas>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
