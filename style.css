@@ -100,3 +100,48 @@ body.dark canvas {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+#target-life {
+  font-weight: 500;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+#target-life[data-selection="82"] {
+  background-color: #dcdcdc; /* neutral gray */
+}
+#target-life[data-selection="88"] {
+  background-color: #c7f5c0; /* optimistic green */
+}
+#target-life[data-selection="94"] {
+  background-color: #fce6a2; /* warm gold */
+}
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  width: 220px;
+  background-color: #222;
+  color: #f1f1f1;
+  text-align: left;
+  border-radius: 6px;
+  padding: 6px 10px;
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}

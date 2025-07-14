@@ -20,10 +20,37 @@
     <label>Date of Birth:
         <input type="date" id="dob" value="1953-05-14" />
     </label>
-    <label>Target Life Expectancy: <input type="number" id="life" value="88" /></label>
+    
+  <div class="tooltip-container">
+    <label for="target-life">Target Life Expectancy:</label>
+    <select id="target-life">
+      <option value="82">82 — Pessimistic</option>
+      <option value="88">88 —Average</option>
+      <option value="94">94 — Optimistic</option>
+    </select>
+    <span class="tooltip-text" id="life-note"></span>
+  </div>
+
+
+    <div id="life-note" style="margin-left: 8px; font-size: 0.9rem; color: #555;"></div>
+
+
+    <!-- \\ <label>Target Life Expectancy: <input type="number" id="life" value="88" /></label> -->
     <label>Starting Assets ($): <input type="number" id="savings" value="1000000" /></label>
     <label>Annual Spending ($): <input type="number" id="spending" value="45000" /></label>
     <!-- <button type="submit">Calculate</button> -->
+
+    <label>Monthly Pension 1 ($): <input type="number" id="pension1" value="2300" /></label>
+    <label>Monthly Pension 2 ($): <input type="number" id="pension2" value="1050" /></label>
+
+    <label>Inflation Rate (%):
+      <input type="range" id="inflation" min="0" max="10" step="0.1" value="3" />
+      <span id="inflation-display">3.0%</span>
+    </label>
+
+    <label>COLA (%):
+    <input type="number" id="cola" value="3.0" step="0.1" />
+    </label>
 
   </form>
   <div id="result" style="margin-top: 1rem; font-weight: 500;"></div>
