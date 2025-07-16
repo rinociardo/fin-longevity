@@ -17,47 +17,155 @@
   <h1>Financial Longevity Calculator</h1>
   <div id="warning-box" style="color: red; display: none;"></div>
   <form id="input-form">
-    <label>Date of Birth:
+    <div style="margin-bottom:1rem; border: 1px solid #ccc; padding: 1rem; border-radius: 8px; max-width: 260px;">
+      <label>Date of Birth:
         <input type="date" id="dob" value="1953-05-14" />
-    </label>
-    
-  <div class="tooltip-container">
-    <label for="target-life">Target Life Expectancy:</label>
-    <select id="target-life">
-      <option value="82">82 — Pessimistic</option>
-      <option value="88">88 —Average</option>
-      <option value="94">94 — Optimistic</option>
-    </select>
-    <span class="tooltip-text" id="life-note"></span>
-  </div>
+      </label>
 
+      <table style="border-collapse:collapse; margin-top:0.5rem; width:100%;">
+        <caption style="caption-side:top; font-weight:bold; margin-bottom:4px;">Life Expectancy</caption>
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:4px; font-weight:normal;">Percentile</th>
+            <th style="text-align:left; padding:4px; font-weight:normal;">Age</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>50th Prctl.</td>
+            <td>
+              <input type="number" id="life-50" value="82" min="50" max="120" step="1" style="width:60px;" />
+            </td>
+          </tr>
+          <tr>
+            <td>75th Prctl.</td>
+            <td>
+              <input type="number" id="life-75" value="88" min="50" max="120" step="1" style="width:60px;" />
+            </td>
+          </tr>
+          <tr>
+            <td>90th Prctl.</td>
+            <td>
+              <input type="number" id="life-90" value="92" min="50" max="120" step="1" style="width:60px;" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-    <div id="life-note" style="margin-left: 8px; font-size: 0.9rem; color: #555;"></div>
+      <div style="margin-top:1rem;">
+        <label for="projection-years" style="display:block; margin-bottom:0.5rem; text-align:left; font-weight:bold; font-size:1em;">
+          Projection Period (years):
+        </label>
+        <div style="position:relative; width:100%; height:38px;">
+          <span style="position:absolute; left:0; top:0; font-size:0.85em; color:#666;">1</span>
+          <span id="projection-years-display" style="position:absolute; left:50%; top:0; transform:translateX(-50%); font-size:0.85em; color:#666;">30</span>
+          <span style="position:absolute; right:0; top:0; font-size:0.85em; color:#666;">50</span>
+          <input type="range" id="projection-years" min="1" max="50" step="1" value="30"
+            style="width:calc(100% - 1rem); margin:0; position:absolute; left:0; top:18px;" />
+        </div>
+      </div>
+    </div>
 
+    <div id="investments-panel" style="margin-bottom: 2rem; border: 1px solid #ccc; padding: 1rem; border-radius: 8px;">
+      <h2>Investments</h2>
+      <label style="display:block; margin-bottom:1rem;">
+        Starting Assets ($):
+        <input type="number" id="savings" value="900000" />
+      </label>
+      <table style="width:100%; margin-top:1rem; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:4px;">Investment Type</th>
+            <th style="text-align:left; padding:4px;">Allocation (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SPY</td>
+            <td>
+              <input type="number" id="spy-allocation" value="80" min="0" max="100" step="1" style="width:60px;" />
+            </td>
+          </tr>
+          <tr>
+            <td>CDs</td>
+            <td>
+              <input type="number" id="cds-allocation" value="20" min="0" max="100" step="1" style="width:60px;" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <!-- \\ <label>Target Life Expectancy: <input type="number" id="life" value="88" /></label> -->
-    <label>Starting Assets ($): <input type="number" id="savings" value="1000000" /></label>
-    <label>Annual Spending ($): <input type="number" id="spending" value="45000" /></label>
-    <!-- <button type="submit">Calculate</button> -->
+    <div id="expenses-pensions-panel" style="margin-bottom:2rem; border:1px solid #ccc; padding:1rem; border-radius:8px;">
+      <h2>Household Data</h2>
+      <label style="display:block; margin-bottom:1rem;">
+        Annual Spending ($):
+        <input type="number" id="spending" value="60000" />
+      </label>
+      <table style="margin-top:1rem; border-collapse:collapse; width:100%; max-width:400px;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:4px;">Pension</th>
+            <th style="text-align:left; padding:4px;">Monthly Amount ($)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pension 1</td>
+            <td>
+              <input type="number" id="pension1" value="2300" min="0" step="1" style="width:80px;" />
+            </td>
+          </tr>
+          <tr>
+            <td>Pension 2</td>
+            <td>
+              <input type="number" id="pension2" value="1050" min="0" step="1" style="width:80px;" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <label>Monthly Pension 1 ($): <input type="number" id="pension1" value="2300" /></label>
-    <label>Monthly Pension 2 ($): <input type="number" id="pension2" value="1050" /></label>
-
-    <label>Inflation Rate (%):
-      <input type="range" id="inflation" min="0" max="10" step="0.1" value="3" />
-      <span id="inflation-display">3.0%</span>
-    </label>
-
-    <label>COLA (%):
-    <input type="number" id="cola" value="3.0" step="0.1" />
-    </label>
+    <div id="Macroeconomic Data" style="margin-bottom:2rem; border:1px solid #ccc; padding:1rem; border-radius:8px;">
+      <h2>Economic Parameters</h2>
+      <table style="margin-top:1rem; margin-bottom:1rem; border-collapse:collapse; width:100%; max-width:400px;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:4px;">Parameter</th>
+            <th style="text-align:left; padding:4px;">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Inflation Rate (%)</td>
+            <td>
+              <input type="range" id="inflation" min="0" max="10" step="0.1" value="3" />
+              <span id="inflation-display">3.0%</span>
+            </td>
+          </tr>
+          <tr>
+            <td>COLA (%)</td>
+            <td>
+              <input type="range" id="cola" min="0" max="10" step="0.1" value="3.0" />
+              <span id="cola-display">3.0%</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
   </form>
   <div id="result" style="margin-top: 1rem; font-weight: 500;"></div>
 
   <canvas id="depletionChart" width="600" height="300"></canvas>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+<!-- Chart.js v4.5.0 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- chartjs-plugin-annotation v3.0.1 (compatible with Chart.js v4+) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
   <script src="script.js"></script>
 </body>
 </html>

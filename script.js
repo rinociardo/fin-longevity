@@ -1,7 +1,8 @@
-let depletionChart = null;
 // script.js
 // Dark mode toggle
 
+let depletionChart = null;
+let allocationValid = true;
 document.getElementById('darkToggle').addEventListener('change', (e) => {
   document.body.classList.toggle('dark', e.target.checked);
 });
@@ -32,6 +33,33 @@ function isValidDOB(dobStr) {
   return true;
 }
 
+function clearChartAndResult() {
+  document.getElementById('result').textContent = '';
+  const chartCanvas = document.getElementById('depletionChart');
+  if (window.depletionChartInstance) {
+    window.depletionChartInstance.destroy();
+    window.depletionChartInstance = null;
+  }
+  chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+}
+
+// Update validateAllocation to use the helper
+function validateAllocation() {
+  const spyInput = document.getElementById('spy-allocation');
+  const cdsInput = document.getElementById('cds-allocation');
+  const spy = parseInt(spyInput.value) || 0;
+  const cds = parseInt(cdsInput.value) || 0;
+  if (spy + cds !== 100) {
+    showWarning('Allocation must total 100%.');
+    allocationValid = false;
+    clearChartAndResult();
+    return false;
+  }
+  hideWarning();
+  allocationValid = true;
+  return true;
+}
+
 // ⚠️ Show and Hide Warnings
 function showWarning(message) {
   const box = document.getElementById('warning-box');
@@ -44,16 +72,43 @@ function hideWarning() {
   box.style.display = 'none';
 }
 
-// 🧮 Main Calculation Handler
+
+function makeLifeLine(x, label, color, description) {
+  return {
+    type: 'line',
+    xMin: x,
+    xMax: x,
+    xScaleID: 'x',
+    borderColor: color,
+    borderWidth: 2,
+    borderDash: [6, 6],
+    clip: false,
+    label: {
+      content: description || label,
+      enabled: true,
+      position: 'start',
+      backgroundColor: 'rgba(255,255,255,0.9)',
+      color: color,
+      font: { weight: 'bold', size: 12 },
+      padding: 6
+    }
+  };
+}
+
 function handleCalculation() {
   hideWarning();
 
+  // ✅ Allocation must be valid
+  if (!allocationValid) return;
+
+  // 🧠 Get and validate DOB
   const dob = document.getElementById('dob').value;
   if (!isValidDOB(dob)) {
     showWarning("⚠️ Please enter a valid date of birth between 1905 and today.");
     return;
   }
-  
+
+  // 💰 Inputs
   const age = calculateAgeFromDOB(dob);
   const savings = parseFloat(document.getElementById('savings').value) || 0;
   const spending = parseFloat(document.getElementById('spending').value) || 0;
@@ -61,105 +116,73 @@ function handleCalculation() {
   const colaRate = parseFloat(document.getElementById('cola').value) / 100;
   const pension1Monthly = parseFloat(document.getElementById('pension1').value) || 0;
   const pension2Monthly = parseFloat(document.getElementById('pension2').value) || 0;
+  const projectionYears = parseInt(document.getElementById('projection-years').value) || 30;
 
-  const lifeExpectancy = parseInt(document.getElementById('target-life').value);
-  document.getElementById('target-life').dataset.selection = lifeExpectancy;
-  let optimismLabel = '';
-  if (lifeExpectancy === 82) optimismLabel = 'This represents an average life expectancy.';
-  if (lifeExpectancy === 88) optimismLabel = 'Optimistic: planning beyond the average lifespan.';
-  if (lifeExpectancy === 94) optimismLabel = 'Very optimistic: used for long-horizon projections.';
-  const noteEl = document.getElementById('life-note');
-  if (noteEl) {
-    noteEl.textContent = optimismLabel;
-  noteEl.dataset.show = 'true';
-  }
-  document.getElementById('life-note').textContent = optimismLabel;
+  // 📈 Life expectancy inputs
+  const life50 = parseInt(document.getElementById('life-50').value) || 82;
+  const life75 = parseInt(document.getElementById('life-75').value) || 88;
+  const life90 = parseInt(document.getElementById('life-90').value) || 92;
 
+  // 📊 Simulation arrays
+  const ageArray = [];
+  const assetArray = [];
+  let currentAssets = savings;
+  let depletionAge = null;
 
-  // 📆 Chart Data: Simple depletion over time
-    
+  for (let yearOffset = 0; yearOffset < projectionYears; yearOffset++) {
+    const currentYear = age + yearOffset;
+    ageArray.push(currentYear);
 
-    const ageArray = [];
-    const assetArray = [];
-
- 
-    let currentAssets = savings;
-
-    for (let year = age; year <= lifeExpectancy; year++) {
-        ageArray.push(year);
-
-       const yearOffset = year - age;
-
-        // Adjust spending for inflation
-        const inflatedSpending = spending * Math.pow(1 + inflationRate, yearOffset);
-
-         // 🪙 COLA-adjusted pensions
+    const inflatedSpending = spending * Math.pow(1 + inflationRate, yearOffset);
     const annualPension1 = pension1Monthly * 12 * Math.pow(1 + colaRate, yearOffset);
     const annualPension2 = pension2Monthly * 13 * Math.pow(1 + colaRate, yearOffset);
-
     const adjustedPension = annualPension1 + annualPension2;
+    const netSpending = inflatedSpending - adjustedPension;
 
+    currentAssets -= Math.max(netSpending, 0);
+    assetArray.push(Math.max(currentAssets, 0));
 
-        // Net expense
-        const netSpending = inflatedSpending - adjustedPension;
-
-        currentAssets -= Math.max(netSpending, 0); // no refunds :)
-        assetArray.push(Math.max(currentAssets, 0));
-    
-        const yearsUntilDepletion = (netSpending > 0) ? savings / netSpending : 0;
-
-// 🔢 Core calculations
-const depletionAge = (age + yearsUntilDepletion).toFixed(1);
-const finalAssets = assetArray[assetArray.length - 1]; // value at lifeExpectancy
-const depleted = finalAssets <= 0;
-
-
-// 🎯 Message logic with emoji and status
-let resultMessage = '';
-let emoji = '';
-let color = '';
-
-if (depleted) {
-  // Outlive savings
-  emoji = '🔴';
-  color = '#c62828'; // red
-  resultMessage = `${emoji} You’re ${age}, and if your life expectancy is ${lifeExpectancy}, your savings may run out by age ${depletionAge}. That’s a warning sign — time to revisit your spending plan.`;
-} else if (Math.abs(depletionAge - lifeExpectancy) <= 1.5) {
-  // Balanced plan
-  emoji = '🟡';
-  color = '#fbc02d'; // gold/yellow
-  resultMessage = `${emoji} You’re ${age}, and your savings are projected to last until age ${depletionAge}, close to your target of ${lifeExpectancy}. Balanced plan — nicely calibrated!`;
-} else {
-  // Surplus savings
-  emoji = '🟢';
-  color = '#2e7d32'; // green
-  resultMessage = `${emoji} You’re ${age}, and you're likely to have $${finalAssets.toLocaleString()} remaining at age ${lifeExpectancy}. You'll leave a solid legacy — or a generous cushion 😉.`;
-}
-
-// 🎨 Apply result text and color styling
-const resultEl = document.getElementById('result');
-resultEl.textContent = resultMessage;
-resultEl.style.color = color;
-
+    if (currentAssets <= 0 && depletionAge === null) {
+      depletionAge = currentYear;
     }
+  }
 
+  if (depletionAge === null) depletionAge = "Never";
 
-    // 🔁 If chart exists, destroy it before redrawing
-    if (depletionChart && typeof depletionChart.destroy === 'function') {
-        depletionChart.destroy();
-        depletionChart = null;
-    }
+  const finalAssets = assetArray[assetArray.length - 1];
+  const depleted = finalAssets <= 0;
 
+  // 🎯 Build result message
+  let emoji, color, resultMessage;
+  if (depleted) {
+    emoji = '🔴';
+    color = '#c62828';
+    resultMessage = `${emoji} You’re ${age}, and your savings may run out by age ${depletionAge}.`;
+  } else {
+    emoji = '🟢';
+    color = '#2e7d32';
+    resultMessage = `${emoji} You’re ${age}, and you're likely to have $${finalAssets.toLocaleString()} remaining after ${projectionYears} years.`;
+  }
 
-    // 🧱 Create new chart
-    const ctx = document.getElementById('depletionChart').getContext('2d');
+  const resultEl = document.getElementById('result');
+  resultEl.textContent = resultMessage;
+  resultEl.style.color = color;
 
+  // 🧹 Clear existing chart if needed
+  if (depletionChart && typeof depletionChart.destroy === 'function') {
+    depletionChart.destroy();
+    depletionChart = null;
+  }
 
-    depletionChart = new Chart(ctx, {
+  // 📐 Create new chart
+  const ctx = document.getElementById('depletionChart').getContext('2d');
+  Chart.register(window['chartjs-plugin-annotation']);
+
+  depletionChart = new Chart(ctx, {
     type: 'line',
     data: {
-        labels: ageArray,
-        datasets: [{
+      labels: ageArray,
+      datasets: [{
         label: 'Remaining Assets ($)',
         data: assetArray,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
@@ -168,104 +191,146 @@ resultEl.style.color = color;
         fill: true,
         pointRadius: 0,
         tension: 0.25
-        }]
+      }]
     },
     options: {
-        responsive: true,
-        plugins: {
-        legend: {
-            display: false
-        },
+      responsive: true,
+      layout: {
+        padding: { top: 40, bottom: 20 }
+      },
+      plugins: {
+        legend: { display: false },
         tooltip: {
-            callbacks: {
+          callbacks: {
             label: ctx => `$${ctx.raw.toLocaleString()}`
-            }
-        }
+          }
         },
-        scales: {
+        annotation: {
+          annotations: {
+            line50: makeLifeLine(life50, '50th', '#888', '50th percentile life expectancy'),
+            line75: makeLifeLine(life75, '75th', '#f4b400', '75th percentile life expectancy'),
+            line90: makeLifeLine(life90, '90th', '#e20b2bff', '90th percentile life expectancy')
+          }
+        }
+
+      },
+      scales: {
         x: {
-            title: {
-            display: true,
-            text: 'Age'
-            }
+          type: 'linear',
+          title: { display: true, text: 'Age' }
         },
         y: {
-            title: {
-            display: true,
-            text: 'Remaining Assets ($)'
-            },
-            beginAtZero: true
+          beginAtZero: true,
+          title: { display: true, text: 'Remaining Assets ($)' }
         }
-        }
+      }
     }
-    });  
-    }
+  });
+}
 
-    // ⌛ Debounce Helper
-    function debounce(fn, delay = 400) {
-    let timeout;
-    return function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(fn, delay);
-    };
-    }
-    function longDebounce(fn, delay = 1000) {
-    let timeout;
-    return function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(fn, delay);
-    };
-    }
+  // ⌛ Debounce Helper
+  function debounce(fn, delay = 400) {
+  let timeout;
+  return function () {
+      clearTimeout(timeout);
+      timeout = setTimeout(fn, delay);
+  };
+  }
+  function longDebounce(fn, delay = 1000) {
+  let timeout;
+  return function () {
+      clearTimeout(timeout);
+      timeout = setTimeout(fn, delay);
+  };
+  }
 
-    // 🖇️ Event Listeners for Inputs
-    const inputs = document.querySelectorAll('input');
-    const debouncedCalc = debounce(handleCalculation);
+  // 🖇️ Event Listeners for Inputs (excluding allocation)
+const inputs = document.querySelectorAll('input:not(#spy-allocation):not(#cds-allocation)');
+const debouncedCalc = debounce(() => {
+  if (allocationValid) handleCalculation();
+});
 
-    inputs.forEach(input => {
-    input.addEventListener('input', debouncedCalc);
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-        handleCalculation();
-        }
-    });
-    });
-    window.addEventListener('DOMContentLoaded', () => {
+inputs.forEach(input => {
+  input.addEventListener('input', debouncedCalc);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && allocationValid) {
+      handleCalculation();
+    }
+  });
+});
+
+// Validate allocation and run calculation on blur or Enter key
+function tryValidateAndCalculate() {
+  if (validateAllocation()) {
     handleCalculation();
-    });
-    // document.getElementById('inflation').addEventListener('input', () => {
-    //   const val = document.getElementById('inflation').value;
-    //   document.getElementById('inflation-display').textContent = `${parseFloat(val).toFixed(1)}%`;
-   // 👇 Inflation listener (near bottom of script.js)
-const inflationSlider = document.getElementById('inflation');
-const inflationDisplay = document.getElementById('inflation-display');
-const debouncedInflationUpdate = longDebounce(() => {
-  handleCalculation();
-}, 1000);
+  }
+}
 
-document.getElementById('target-life').addEventListener('change', debouncedCalc);
-document.getElementById('target-life').addEventListener('keydown', (e) => {
+// SPY Allocation
+const spyInput = document.getElementById('spy-allocation');
+spyInput.addEventListener('blur', tryValidateAndCalculate);
+spyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
-    handleCalculation();
+    spyInput.blur(); // triggers blur event
   }
 });
 
+// CDs Allocation
+const cdsInput = document.getElementById('cds-allocation');
+cdsInput.addEventListener('blur', tryValidateAndCalculate);
+cdsInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    cdsInput.blur(); // triggers blur event
+  }
+});
+
+// Prevent auto-calculation on allocation input change and clear stale data immediately
+spyInput.addEventListener('input', () => {
+  allocationValid = false;
+  clearChartAndResult();
+});
+cdsInput.addEventListener('input', () => {
+  allocationValid = false;
+  clearChartAndResult();
+});
+
+// Inflation and COLA listeners
+const inflationSlider = document.getElementById('inflation');
+const inflationDisplay = document.getElementById('inflation-display');
+const debouncedInflationUpdate = longDebounce(() => {
+  if (allocationValid) handleCalculation();
+}, 1000);
 
 inflationSlider.addEventListener('input', () => {
   const val = inflationSlider.value;
   inflationDisplay.textContent = `${parseFloat(val).toFixed(1)}%`;
-  document.getElementById('cola').value = val;
+  colaSlider.value = val;
+  colaDisplay.textContent = `${parseFloat(val).toFixed(1)}%`; // <-- Add this line
   debouncedInflationUpdate();
-
-
-  // Optionally sync COLA to inflation if user hasn’t changed it
-  document.getElementById('cola').value = val;
-  handleCalculation(); 
-
 });
-document.getElementById('cola').addEventListener('input', debouncedCalc);
-document.getElementById('cola').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
+
+const colaSlider = document.getElementById('cola');
+const colaDisplay = document.getElementById('cola-display');
+colaSlider.addEventListener('input', () => {
+  colaDisplay.textContent = `${parseFloat(colaSlider.value).toFixed(1)}%`;
+  if (allocationValid) debouncedCalc();
+});
+
+// Projection Years slider
+const projectionSlider = document.getElementById('projection-years');
+const projectionDisplay = document.getElementById('projection-years-display');
+
+projectionSlider.addEventListener('input', () => {
+  projectionDisplay.textContent = projectionSlider.value;
+  if (allocationValid) debouncedCalc();
+});
+
+// Initial calculation at startup
+window.addEventListener('DOMContentLoaded', () => {
+  allocationValid = validateAllocation();
+  if (allocationValid) {
     handleCalculation();
   }
 });
+
 
