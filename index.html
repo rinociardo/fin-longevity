@@ -32,19 +32,19 @@
         </thead>
         <tbody>
           <tr>
-            <td>50th Prctl.</td>
+            <td>50th Prct - Avg Health</td>
             <td>
               <input type="number" id="life-50" value="82" min="50" max="120" step="1" style="width:60px;" />
             </td>
           </tr>
           <tr>
-            <td>75th Prctl.</td>
+            <td>75th Prct - Good Health</td>
             <td>
               <input type="number" id="life-75" value="88" min="50" max="120" step="1" style="width:60px;" />
             </td>
           </tr>
           <tr>
-            <td>90th Prctl.</td>
+            <td>90th Prct - Excellent Health</td>
             <td>
               <input type="number" id="life-90" value="92" min="50" max="120" step="1" style="width:60px;" />
             </td>
@@ -157,7 +157,22 @@
   </form>
   <div id="result" style="margin-top: 1rem; font-weight: 500;"></div>
 
+ 
+
+
+
+
   <canvas id="depletionChart" width="600" height="300"></canvas>
+
+  <div style="margin-bottom: 12px;">
+    <label for="realDollarToggle" style="display: inline-flex; align-items: center; gap: 8px;">
+      <input type="checkbox" id="realDollarToggle" checked />
+      <span id="realDollarLabel">Today's Money</span>
+    </label>
+  </div>
+
+  <canvas id="spendingChart" width="800" height="400"></canvas>
+
   <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 <!-- Chart.js v4.5.0 -->
